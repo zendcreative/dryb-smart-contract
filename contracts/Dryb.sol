@@ -29,19 +29,24 @@ contract Dryb {
   uint public baseFare;
   uint public pricePerKm;
   uint public pricePerMinute;
+  uint public perWaitingTime;
 
-  enum RideType { Taxi, Regular, Premium, Premium6Plus, ExpressVan, Bus, Tricycle, Motorcycle, Delivery }
+  enum RideType { PRIVATE, TAXI, UV, BUS, ExpressVan, Bus, TRICYCLE }
   enum RideStatus { Requested, PickUp, InTransit, CancelledByDriver, CancelledByPassenger, Completed }
 
+
   struct Fare {
-    bytes32 _id;
-    RideType rideType;
     uint256 baseFare;
-    uint256 perDistance;
-    uint256 perTime;
+    uint256 perKm;
+    uint256 perMinute;
     uint256 perWaitingTime;
-    uint256 specialDiscount;
+    bool status;
   }
+
+  Fare base;
+
+  mapping(bytes32 => Fare) vehicle;
+
 
   struct Driver {
     address _address;
@@ -84,6 +89,7 @@ contract Dryb {
     ===== EVENTS =======
     ====================
   */
+  event VehicleFareChanged(address admin, bytes32 message, bytes32 vehicle, uint256 _baseFare, uint256 _pricePerKm, uint256 _pricePerMinute, uint256 _perWaitingTime, uint256 time);
   event FareChanged(address admin, string message, uint256 from, uint256 to, uint256 date);
   event DriverAdded(address admin, string message, address driver, string firstname, string lastname, uint256 date);
 
@@ -176,8 +182,16 @@ contract Dryb {
     baseFare = 25;
     pricePerKm = 5;
     pricePerMinute = 2;
+    perWaitingTime = 0;
     admins[owner] = Admin(owner, 'Admin', now);
     adminList.push(owner);
+
+    base = Fare(baseFare, pricePerKm, pricePerMinute, perWaitingTime, true);
+    vehicle['private'] = base;
+    vehicle['taxi'] = base;
+    vehicle['uv'] = base;
+    vehicle['bus'] = base;
+    vehicle['tricycle'] = base;
   }
 
 
@@ -233,6 +247,17 @@ contract Dryb {
     FareChanged(msg.sender, 'Updated Price per KM', pricePerKm, price, now);
     pricePerKm = price;
     return true;
+  }
+
+  function setVehicleFare(bytes32 _type, uint256 _baseFare, uint256 _pricePerKm, uint256 _pricePerMinute, uint256 _perWaitingTime) public isAdmin returns (bool success) {
+    vehicle[_type] = Fare(_baseFare, _pricePerKm, _pricePerMinute, _perWaitingTime, true);
+    VehicleFareChanged(msg.sender, 'Updated Vehicle Fare', _type, _baseFare, _pricePerKm, _pricePerMinute, _perWaitingTime, now);
+    return true;
+  }
+
+  function getVehicleFare(bytes32 _type) public isAdmin returns (uint256 _baseFare, uint256 _pricePerKm, uint256 _pricePerMinute, uint256 _perWaitingTime, bool _status) {
+    require(vehicle[_type].status);
+    return (vehicle[_type].baseFare, vehicle[_type].perKm, vehicle[_type].perMinute, vehicle[_type].perWaitingTime, vehicle[_type].status);
   }
 
   // // // // // // // //
