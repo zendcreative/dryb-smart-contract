@@ -255,7 +255,7 @@ contract Dryb {
     return true;
   }
 
-  function getVehicleFare(bytes32 _type) public isAdmin returns (uint256 _baseFare, uint256 _pricePerKm, uint256 _pricePerMinute, uint256 _perWaitingTime, bool _status) {
+  function getVehicleFare(bytes32 _type) public returns (uint256 _baseFare, uint256 _pricePerKm, uint256 _pricePerMinute, uint256 _perWaitingTime, bool _status) {
     require(vehicle[_type].status);
     return (vehicle[_type].baseFare, vehicle[_type].perKm, vehicle[_type].perMinute, vehicle[_type].perWaitingTime, vehicle[_type].status);
   }
